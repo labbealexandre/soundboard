@@ -1,6 +1,7 @@
 import time
 import json
 import os
+import keyboard
 
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 
@@ -13,6 +14,13 @@ def load_devices() -> list[str]:
         devices = json.load(file)
 
     return devices
+
+
+def load_bindings() -> list[str]:
+    with open("bindings.json") as file:
+        bindings = json.load(file)
+
+    return bindings
 
 
 def start_players(devices: list[str]) -> list[Player]:
@@ -34,9 +42,27 @@ def kill_players(players: list[Player]):
 def main():
     devices = load_devices()
     players = start_players(devices)
+    bindings = load_bindings()
 
-    for player in players:
-        player.play_sound("klonk.mp3")
+    pressed_keys = []
+
+    print("Ready to play sounds...")
+
+    while True:
+        try:
+            for key in bindings.keys():
+                if keyboard.is_pressed(key) and key not in pressed_keys:
+                    pressed_keys.append(key)
+
+            for key in pressed_keys:
+                if not keyboard.is_pressed(key):
+                    pressed_keys.remove(key)
+                    sound = bindings[key]
+                    for player in players:
+                        player.play_sound(sound)
+        except KeyboardInterrupt:
+            print("Ctrl-C pressed, stopping the program")
+            break
 
     time.sleep(2)
 
